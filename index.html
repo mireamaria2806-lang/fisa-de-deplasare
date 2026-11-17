@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fișa de deplasare</title>
+  <style>
+    :root { --navy:#7a4058; --blue:#d3a1b3; --light:#f8edf2; --line:#ead4de; --green:#16896b; --orange:#ef9b37; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:"Segoe UI",Arial,sans-serif; background:#fbf6f8; color:#4a3040; }
+    body::before {
+      content:"🎀  ･  🎀  ･  🎀  ･  🎀  ･  🎀  ･  🎀";
+      position:fixed; left:0; top:18px; width:100%; height:70px;
+      color:#e58bad; opacity:.36; font-size:28px; letter-spacing:28px;
+      text-align:center; pointer-events:none; z-index:-1;
+      transform:rotate(-2deg);
+    }
+    body::after {
+      content:"🎀                         🎀                         🎀                         🎀";
+      position:fixed; left:-10%; bottom:24px; width:120%; height:40px;
+      color:#e58bad; opacity:.30; font-size:32px; letter-spacing:30px;
+      text-align:center; pointer-events:none; z-index:-1;
+      transform:rotate(2deg);
+    }
+    .side-bows-left,
+    .side-bows-right {
+      position:fixed; top:140px; bottom:100px; z-index:-1;
+      width:54px; display:flex; flex-direction:column;
+      justify-content:space-between; align-items:center;
+      color:#e58bad; opacity:.42; font-size:30px; pointer-events:none;
+    }
+    .side-bows-left { left:18px; }
+    .side-bows-right { right:18px; }
+    .shell { max-width:1180px; margin:auto; padding:28px; position:relative; }
+    .topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; }
+    h1 { margin:0; font-size:34px; color:var(--navy); font-family:"Brush Script MT","Segoe Script","Lucida Handwriting",cursive; font-weight:700; font-style:italic; letter-spacing:.5px; text-transform:none; border-left:0; padding-left:0; }
+    .actions { display:flex; gap:10px; }
+    button { border:0; border-radius:7px; padding:11px 15px; cursor:pointer; font-weight:700; }
+    .secondary { background:#fff; color:var(--navy); border:1px solid var(--line); }
+    .primary { background:var(--blue); color:#fff; }
+    .card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:18px; margin-bottom:16px; box-shadow:0 3px 10px rgba(122,64,88,.05); }
+    .card h2 { margin:-18px -18px 16px; padding:12px 18px; background:var(--navy); color:#fff; border-radius:12px 12px 0 0; font-size:22px; font-family:"Brush Script MT","Segoe Script","Lucida Handwriting",cursive; font-weight:700; font-style:italic; letter-spacing:.3px; }
+    .grid { display:grid; grid-template-columns:repeat(12,1fr); gap:14px; }
+    .col-12{grid-column:span 12}.col-8{grid-column:span 8}.col-6{grid-column:span 6}.col-4{grid-column:span 4}.col-3{grid-column:span 3}.col-2{grid-column:span 2}
+    label { display:block; font-size:12px; font-weight:800; color:#735762; margin-bottom:6px; }
+    input,select,textarea { width:100%; height:42px; border:1px solid #dfccd5; border-radius:7px; padding:8px 10px; background:#fff; color:#4a3040; }
+    input:focus,select:focus,textarea:focus { outline:2px solid #edcad7; border-color:#d3a1b3; }
+    input[type="date"] { accent-color:#d3a1b3; background:#fffafb; border-color:#dfccd5; }
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      cursor:pointer;
+      padding:5px;
+      border-radius:6px;
+      background:#f3ccd9;
+      filter:sepia(.15) hue-rotate(285deg) saturate(1.35);
+      opacity:.95;
+    }
+    .date-picker { position:relative; }
+    .date-picker input { cursor:pointer; }
+    .calendar-popup { display:none; position:absolute; z-index:50; width:280px; margin-top:4px; padding:12px; background:#fffafb; border:1px solid #dfccd5; border-radius:12px; box-shadow:0 10px 28px rgba(122,64,88,.18); }
+    .calendar-popup.open { display:block; }
+    .calendar-head { display:grid; grid-template-columns:32px 1fr 32px; align-items:center; margin-bottom:8px; text-align:center; font-weight:800; color:#7a4058; }
+    .calendar-head span { display:flex; justify-content:center; gap:4px; }
+    .calendar-head select { width:auto; height:30px; padding:3px 5px; border:1px solid #dfccd5; border-radius:6px; color:#7a4058; font-weight:800; background:#fff; }
+    .calendar-head button { width:32px;height:32px;padding:0;border-radius:50%;background:#f3ccd9;color:#7a4058; }
+    .calendar-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+    .calendar-grid button { height:32px;padding:0;border-radius:50%;background:transparent;color:#4a3040;font-weight:600; }
+    .calendar-grid button:hover { background:#f3ccd9; }
+    .calendar-grid .dow { height:24px;color:#806b75;font-size:11px;cursor:default; }
+    .calendar-grid .dow:hover { background:transparent; }
+    .calendar-grid .selected { background:#d3a1b3!important;color:#fff!important; }
+    .calendar-grid .muted { color:#c6abb7; }
+    textarea { height:70px; resize:vertical; }
+    .flag-select { position:relative; }
+    .flag-select select { padding-left:46px; }
+    .flag { position:absolute; left:12px; top:9px; z-index:2; font-size:20px; line-height:24px; pointer-events:none; }
+    .route { display:grid; grid-template-columns:1fr 220px 1fr; align-items:center; gap:12px; min-height:160px; background:linear-gradient(135deg,#fffafb,#f8edf2); border-radius:10px; padding:18px; overflow:hidden; }
+    .airport { text-align:center; }
+    .airport-icon { width:62px;height:62px;margin:auto;border-radius:50%;display:grid;place-items:center;background:#fff;border:1px solid var(--line);font-size:30px;box-shadow:0 4px 12px rgba(122,64,88,.08); }
+    .airport-name { font-weight:800; margin-top:8px; }
+    .airport-small { color:#806b75;font-size:12px;margin-top:3px; }
+    .flightline { height:2px; background:var(--blue); position:relative; overflow:visible; }
+    .flightline:after { content:"✈"; position:absolute; left:-14px; top:-15px; font-size:26px; color:var(--blue); transform:rotate(0deg); animation:fly-route 4s linear infinite alternate; }
+    @keyframes fly-route {
+      0% { left:-14px; transform:rotate(-2deg) scale(.95); }
+      100% { left:calc(100% - 12px); transform:rotate(2deg) scale(.95); }
+    }
+    .distance { margin-top:8px; font-size:12px; font-weight:800; color:var(--blue); }
+    .person-row { display:grid; grid-template-columns:1fr 42px; gap:8px; margin-bottom:8px; }
+    .remove { height:42px;background:#fff2f2;color:#b42318;border:1px solid #ffd2d2;font-size:18px;padding:0; }
+    .transport-row { display:grid; grid-template-columns:1.2fr 1fr 1fr 1fr 42px; gap:8px; align-items:end; margin-bottom:8px; }
+    .total-box { background:var(--navy); color:#fff; border-radius:9px; padding:14px; text-align:right; }
+    .total-box span { display:block; font-size:12px; opacity:.8; }
+    .total-box strong { font-size:24px; }
+    .summary-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+    .summary { background:var(--light); border-radius:8px; padding:12px; }
+    .summary span { display:block;font-size:11px;color:#806b75;font-weight:700 }
+    .summary strong { display:block;margin-top:5px;font-size:18px;color:var(--navy)}
+    .airline-select { display:flex; align-items:center; gap:10px; }
+    .airline-logo { width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--navy);color:#fff;font-size:11px;font-weight:900;flex:none }
+    .print-only { display:none; }
+    .airline-picker { position:relative; }
+    .airline-button { width:100%; height:42px; border:1px solid #dfccd5; border-radius:7px; background:#fff; display:flex; align-items:center; gap:9px; padding:6px 10px; color:#4a3040; text-align:left; font-weight:600; }
+    .airline-button img { width:30px; height:30px; object-fit:contain; border-radius:50%; background:#fff; border:1px solid var(--line); }
+    .airline-menu { display:none; position:absolute; z-index:20; width:100%; max-height:280px; overflow-y:auto; margin-top:4px; background:#fffafb; border:1px solid #dfccd5; border-radius:8px; box-shadow:0 8px 24px rgba(122,64,88,.16); }
+    .airline-menu.open { display:block; }
+    .airline-option { width:100%; height:48px; border:0; border-bottom:1px solid #f3e8ed; border-radius:0; background:#fffafb; display:flex; align-items:center; gap:9px; padding:7px 10px; color:#7a4058; text-align:left; font-weight:600; }
+    .airline-option:last-child { border-bottom:0; }
+    .airline-option:hover { background:#f8edf2; }
+    .airline-option img { width:34px; height:34px; object-fit:contain; border-radius:50%; background:#fff; border:1px solid var(--line); }
+    .country-picker { position:relative; }
+    .country-button { width:100%; height:42px; border:1px solid #dfccd5; border-radius:7px; background:#fff; display:flex; align-items:center; gap:9px; padding:7px 10px 7px 46px; color:#4a3040; text-align:left; font-weight:600; }
+    .country-button .country-emoji,
+    .country-option .country-emoji { font-size:22px; line-height:1; }
+    .country-menu { display:none; position:absolute; z-index:30; width:100%; max-height:300px; overflow-y:auto; margin-top:4px; background:#fffafb; border:1px solid #dfccd5; border-radius:8px; box-shadow:0 8px 24px rgba(122,64,88,.16); }
+    .country-menu.open { display:block; }
+    .country-option { width:100%; min-height:44px; border:0; border-bottom:1px solid #f3e8ed; border-radius:0; background:#fffafb; display:flex; align-items:center; gap:9px; padding:7px 10px; color:#7a4058; text-align:left; font-weight:600; }
+    .country-option:last-child { border-bottom:0; }
+    .country-option:hover { background:#f8edf2; }
+    .transport-row select {
+      background:#fffafb;
+      border:1px solid #dfccd5;
+      accent-color:#d3a1b3;
+    }
+    .transport-row select option {
+      background:#fffafb;
+      color:#7a4058;
+    }
+    @media(max-width:800px){.col-8,.col-6,.col-4,.col-3,.col-2{grid-column:span 12}.summary-grid{grid-template-columns:1fr 1fr}.shell{padding:14px}.transport-row{grid-template-columns:1fr 1fr}.route{grid-template-columns:1fr 120px 1fr}.topbar{align-items:flex-start}.actions{flex-direction:column}}
+    @media print {
+      body { background:#fff; }
+      .shell { max-width:none; padding:0; }
+      .topbar .actions, .remove, .add-btn { display:none!important; }
+      .card { break-inside:avoid; box-shadow:none; }
+      input,select,textarea { border:0; border-bottom:1px solid #aaa; border-radius:0; appearance:none; background:#fff!important; height:32px; }
+      .print-only { display:block; }
+      .no-print { display:none!important; }
+    }
+  </style>
+</head>
+<body>
+<div class="side-bows-left" aria-hidden="true"><span>🎀</span><span>🎀</span><span>🎀</span><span>🎀</span></div>
+<div class="side-bows-right" aria-hidden="true"><span>🎀</span><span>🎀</span><span>🎀</span><span>🎀</span></div>
+<main class="shell">
+  <header class="topbar">
+    <h1>Fișă de delegație</h1>
+    <div class="actions"><button class="secondary" id="resetBtn" type="button">Resetează</button><button class="primary" type="button" onclick="window.print()">Exportă PDF</button></div>
+  </header>
+
+  <section class="card">
+    <h2>1. Date deplasare</h2>
+    <div class="grid">
+      <div class="col-4">
+        <label>Șef delegație</label>
+        <select id="leader"></select>
+      </div>
+      <div class="col-2"><label>Data plecare</label><div class="date-picker"><input id="departDate" type="text" placeholder="zz.ll.aaaa" readonly><div class="calendar-popup" id="departCalendar"></div></div></div>
+      <div class="col-2"><label>Data sosire / întoarcere</label><div class="date-picker"><input id="returnDate" type="text" placeholder="zz.ll.aaaa" readonly><div class="calendar-popup" id="returnCalendar"></div></div></div>
+      <div class="col-2"><label>Ora plecare</label><input id="departTime" type="time"></div>
+      <div class="col-2"><label>Număr zile</label><input id="days" type="number" min="1" value="1"></div>
+      <div class="col-12"><label>Scopul deplasării</label><input id="purpose" placeholder="Ex.: participare la conferință / delegație profesională"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>2. Traseu aerian</h2>
+    <div class="grid">
+      <div class="col-4">
+        <label>Punct de plecare</label>
+        <div class="flag-select"><span class="flag">🇷🇴</span><input value="București" readonly style="padding-left:46px"></div>
+        <div class="airport-small" style="margin-top:6px">Aeroportul Internațional Henri Coandă - Otopeni</div>
+      </div>
+      <div class="col-4">
+        <label>Țara de destinație</label>
+        <div class="country-picker">
+          <button type="button" class="country-button" id="countryButton"></button>
+          <div class="country-menu" id="countryMenu"></div>
+          <select id="country" hidden></select>
+        </div>
+      </div>
+      <div class="col-4">
+        <label>Orașul de destinație</label>
+        <div class="flag-select" id="citySelectWrap">
+          <span class="flag" id="citySelectFlag">🌐</span>
+          <select id="city" style="padding-left:46px"></select>
+        </div>
+        <div class="flag-select" id="cityReadonlyWrap" style="display:none">
+          <span class="flag" id="cityReadonlyFlag">🌐</span>
+          <input id="cityReadonly" readonly style="padding-left:46px">
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="route">
+          <div class="airport"><div class="airport-icon">🇷🇴</div><div class="airport-name">București</div><div class="airport-small">OTP · Otopeni</div></div>
+          <div><div class="flightline"></div><div class="distance" id="distance">Calculare…</div></div>
+          <div class="airport"><div class="airport-icon" id="destFlag">🇺🇸</div><div class="airport-name" id="destName">New York</div><div class="airport-small">Destinație</div></div>
+        </div>
+      </div>
+      <div class="col-6">
+        <label>Companie aeriană</label>
+        <div class="airline-picker">
+          <button type="button" class="airline-button" id="airlineButton"></button>
+          <div class="airline-menu" id="airlineMenu"></div>
+          <select id="airline" hidden></select>
+        </div>
+        <div id="airlinePreview" class="airport-small" style="margin-top:7px"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>3. Membrii delegației</h2>
+    <div class="grid">
+      <div class="col-4"><label>Număr persoane în delegație</label><input id="delegateCount" type="number" min="1" value="1" readonly></div>
+      <div class="col-8">
+        <label>Persoane care pleacă în delegație</label>
+        <div id="members"></div>
+        <button type="button" class="secondary add-btn" id="addMember">+ Adaugă persoană</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>4. Transport intern</h2>
+    <div id="transportRows"></div>
+    <button type="button" class="secondary add-btn" id="addTransport">+ Adaugă transport</button>
+  </section>
+
+  <section class="card">
+    <h2>5. Cazare</h2>
+    <div class="grid">
+      <div class="col-4"><label>Nume hotel</label><input id="hotelName" placeholder="Numele hotelului"></div>
+      <div class="col-5"><label>Adresă hotel</label><input id="hotelAddress" placeholder="Strada, număr, oraș"></div>
+      <div class="col-3"><label>Tipul camerei</label><select id="roomType"><option>Camera single</option><option>Camera twin</option><option>Camera dublă</option><option>Suite</option><option>Alt tip</select></div>
+      <div class="col-3"><label>Număr camere</label><input id="roomCount" type="number" min="1" value="1"></div>
+      <div class="col-3"><label>Cost cameră / noapte (RON)</label><input id="roomNight" type="number" min="0" value="0"></div>
+      <div class="col-3"><label>Număr nopți</label><input id="roomNights" type="number" min="0" value="0"></div>
+      <div class="col-3"><div class="total-box"><span>Cost total hotel</span><strong id="hotelTotal">0 RON</strong></div></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>6. Diurnă</h2>
+    <div class="grid">
+      <div class="col-3"><label>Diurnă / persoană / zi (RON)</label><input id="perDiem" type="number" min="0" value="0"></div>
+      <div class="col-3"><label>Număr zile</label><input id="perDiemDays" type="number" min="0" value="1"></div>
+      <div class="col-3"><label>Număr persoane</label><input id="perDiemPeople" type="number" min="1" value="1" readonly></div>
+      <div class="col-3"><div class="total-box"><span>Total diurnă</span><strong id="perDiemTotal">0 RON</strong></div></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Rezumat estimativ</h2>
+    <div class="summary-grid">
+      <div class="summary"><span>Persoane delegație</span><strong id="summaryPeople">1</strong></div>
+      <div class="summary"><span>Transport intern</span><strong id="summaryTransport">0 RON</strong></div>
+      <div class="summary"><span>Cazare</span><strong id="summaryHotel">0 RON</strong></div>
+      <div class="summary"><span>Diurnă</span><strong id="summaryDiem">0 RON</strong></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const employees = ["Adam Maria-Mădălina","Agafiței Alina-Andreea","Agafiței Andreea-Diana","Badea Claudiu-Marius","Bagia Ariana-Maria","Băluță Teodora-Bianca","Băncilă Andra-Maria","Beraru Andreea-Bianca","Broască Costel-Cătălin","Bucur Diana-Andreea","Caraș Gabriela-Octavia","Ceapă Maria-Alexandra","Cireașă Maria-Teodora","Ciuraru Eduard-Bogdan","Cojocaru Gabriela","Constantin Roxana","Cornățeanu Elisa-Gabriela","Crăciun Iulia-Maria","Cristian Daniela-Maria","Dinică Neli","Drăghici Bianca-Ioana","Dumitrescu Diana Andreea","Echim Alexandra","Foca Ioana-Alexandra","Haralambie Elena-Izabela","Iorga Andreea","Ivan Violeta-Ștefania","Luncanu Mariangela","Lupu Eduard-Adrian","Malacu Nicoleta","Mirea Cristiana-Maria","Mîrț Cristina-Andreea","Mișilaricu Karina-Georgiana","Nani Ana Isabel","Pătrășcută Ana-Maria","Petrov Erika-Maria","Popescu Andrei-Sebastian","Rachieru Ioana-Diana","Rugină-Urioc Alexia-Ștefania","Șerban Ana-Maria","Șerban Antonio-Emy","Sîngheorghe Mihăiță","Stoica Karla-Elena","Valcu Amalia Stefania","Vasilcă Cristina-Andreea","Vicol Alisa","Vlase Bianca-Anamaria"];
+
+const destinations = {
+"Statele Unite": [["New York",40.7128,-74.0060],["Chicago",41.8781,-87.6298],["Boston",42.3601,-71.0589],["Washington, D.C.",38.9072,-77.0369],["Los Angeles",34.0522,-118.2437],["San Francisco",37.7749,-122.4194],["Miami",25.7617,-80.1918]],
+"Regatul Unit": [["Londra",51.5072,-0.1276],["Edinburgh",55.9533,-3.1883]],
+"Franța":[["Paris",48.8566,2.3522]],
+"Italia":[["Roma",41.9028,12.4964],["Milano",45.4642,9.1900],["Veneția",45.4408,12.3155]],
+"Spania":[["Madrid",40.4168,-3.7038],["Barcelona",41.3874,2.1686]],
+"Portugalia":[["Lisabona",38.7223,-9.1393]],
+"Țările de Jos":[["Amsterdam",52.3676,4.9041]],
+"Belgia":[["Bruxelles",50.8503,4.3517]],
+"Austria":[["Viena",48.2082,16.3738]],
+"Germania":[["Berlin",52.5200,13.4050],["München",48.1351,11.5820]],
+"Cehia":[["Praga",50.0755,14.4378]],
+"Polonia":[["Varșovia",52.2297,21.0122]],
+"Ungaria":[["Budapesta",47.4979,19.0402]],
+"Danemarca":[["Copenhaga",55.6761,12.5683]],
+"Suedia":[["Stockholm",59.3293,18.0686]],
+"Norvegia":[["Oslo",59.9139,10.7522]],
+"Finlanda":[["Helsinki",60.1699,24.9384]],
+"Irlanda":[["Dublin",53.3498,-6.2603]],
+"Elveția":[["Zürich",47.3769,8.5417],["Geneva",46.2044,6.1432]],
+"Grecia":[["Atena",37.9838,23.7275]],
+"Turcia":[["Istanbul",41.0082,28.9784]],
+"Emiratele Arabe Unite":[["Dubai",25.2048,55.2708],["Abu Dhabi",24.4539,54.3773]],
+"Qatar":[["Doha",25.2854,51.5310]],
+"Japonia":[["Tokyo",35.6762,139.6503]],
+"Coreea de Sud":[["Seul",37.5665,126.9780]],
+"Singapore":[["Singapore",1.3521,103.8198]],
+"Thailanda":[["Bangkok",13.7563,100.5018]],
+"Malaysia":[["Kuala Lumpur",3.1390,101.6869]],
+"Canada":[["Toronto",43.6532,-79.3832],["Montréal",45.5019,-73.5674]],
+"Mexic":[["Mexico City",19.4326,-99.1332]],
+"Brazilia":[["São Paulo",-23.5505,-46.6333]],
+"Argentina":[["Buenos Aires",-34.6037,-58.3816]],
+"Africa de Sud":[["Cape Town",-33.9249,18.4241]],
+"Maroc":[["Marrakech",31.6295,-7.9811]]
+};
+const flags={"România":"🇷🇴","Statele Unite":"🇺🇸","Regatul Unit":"🇬🇧","Franța":"🇫🇷","Italia":"🇮🇹","Spania":"🇪🇸","Portugalia":"🇵🇹","Țările de Jos":"🇳🇱","Belgia":"🇧🇪","Austria":"🇦🇹","Germania":"🇩🇪","Cehia":"🇨🇿","Polonia":"🇵🇱","Ungaria":"🇭🇺","Danemarca":"🇩🇰","Suedia":"🇸🇪","Norvegia":"🇳🇴","Finlanda":"🇫🇮","Irlanda":"🇮🇪","Elveția":"🇨🇭","Grecia":"🇬🇷","Turcia":"🇹🇷","Emiratele Arabe Unite":"🇦🇪","Qatar":"🇶🇦","Japonia":"🇯🇵","Coreea de Sud":"🇰🇷","Singapore":"🇸🇬","Thailanda":"🇹🇭","Malaysia":"🇲🇾","Canada":"🇨🇦","Mexic":"🇲🇽","Brazilia":"🇧🇷","Argentina":"🇦🇷","Africa de Sud":"🇿🇦","Maroc":"🇲🇦"};
+
+const airlines=[
+["Tarom","RO","#164b84","tarom.ro"],["Lufthansa","LH","#1a1a5e","lufthansa.com"],["KLM","KL","#00a1de","klm.com"],["Air France","AF","#002157","airfrance.com"],["British Airways","BA","#233e99","britishairways.com"],["Wizz Air","W6","#c6004b","wizzair.com"],["Ryanair","FR","#073590","ryanair.com"],["Turkish Airlines","TK","#c8102e","turkishairlines.com"],["Emirates","EK","#c8102e","emirates.com"],["Qatar Airways","QR","#5c0632","qatarairways.com"],["American Airlines","AA","#0078d2","aa.com"],["United Airlines","UA","#003da5","united.com"],["Delta Air Lines","DL","#a71930","delta.com"],["ITA Airways","AZ","#006c54","ita-airways.com"],["Iberia","IB","#d71920","iberia.com"],["Swiss","LX","#e60018","swiss.com"],["Austrian Airlines","OS","#e11a2b","austrian.com"],["KLM Royal Dutch","KL","#00a1de","klm.com"],["SAS","SK","#003b70","flysas.com"],["Norwegian","DY","#d20a2e","norwegian.com"],["Finnair","AY","#003580","finnair.com"],["LOT Polish Airlines","LO","#1b3d70","lot.com"],["Air Canada","AC","#d71920","aircanada.com"],["Singapore Airlines","SQ","#b21f24","singaporeair.com"],["ANA","NH","#00458f","ana.co.jp"],["Korean Air","KE","#00256c","koreanair.com"],["Japan Airlines","JL","#d71920","jal.com"],["Thai Airways","TG","#4c2a86","thaiairways.com"],["Malaysia Airlines","MH","#1d3d81","malaysiaairlines.com"],["LATAM","LA","#e31837","latam.com"],["Ethiopian Airlines","ET","#35578a","ethiopianairlines.com"],["EgyptAir","MS","#153b5c","egyptair.com"],["Etihad Airways","EY","#be8b2f","etihad.com"]
+];
+
+const $=id=>document.getElementById(id);
+employees.forEach(e=>{ $("leader").add(new Option(e,e)); });
+$("leader").value="Mirea Cristiana-Maria";
+Object.keys(destinations).forEach(c=>{
+  $("country").add(new Option(c,c));
+  const flag=flags[c]||"🌐";
+  $("countryMenu").insertAdjacentHTML("beforeend",`<button type="button" class="country-option" data-country="${c}"><span class="country-emoji">${flag}</span><span>${c}</span></button>`);
+});
+function refreshCountryButton(){
+  const country=$("country").value;
+  const flag=flags[country]||"🌐";
+  $("countryButton").innerHTML=`<span class="country-emoji">${flag}</span><span>${country}</span>`;
+}
+$("countryButton").addEventListener("click",e=>{
+  e.stopPropagation();
+  $("countryMenu").classList.toggle("open");
+});
+$("countryMenu").addEventListener("click",e=>{
+  const option=e.target.closest(".country-option");
+  if(!option)return;
+  $("country").value=option.dataset.country;
+  refreshCountryButton();
+  $("country").dispatchEvent(new Event("change"));
+  $("countryMenu").classList.remove("open");
+});
+document.addEventListener("click",e=>{
+  if(!e.target.closest(".country-picker"))$("countryMenu").classList.remove("open");
+});
+
+function employeeOptions(selected=""){
+  return `<option value="">Alege angajat...</option>`+employees.map(e=>`<option ${e===selected?"selected":""}>${e}</option>`).join("");
+}
+$("members").insertAdjacentHTML("beforeend",`<div class="person-row"><select class="member">${employeeOptions()}</select><button type="button" class="remove" title="Elimină">×</button></div>`);
+
+function refreshCountry(){
+  const country=$("country").value;
+  const countryFlag=flags[country]||"🌐";
+  refreshCountryButton();
+  const cities=destinations[country];
+  if(cities.length===1){
+    $("city").style.display="none";
+    $("citySelectWrap").style.display="none";
+    $("cityReadonlyWrap").style.display="block";
+    $("cityReadonly").value=cities[0][0];
+    $("cityReadonlyFlag").textContent=countryFlag;
+  }else{
+    $("city").style.display="block";
+    $("citySelectWrap").style.display="block";
+    $("cityReadonlyWrap").style.display="none";
+    $("citySelectFlag").textContent=countryFlag;
+    $("city").innerHTML=cities.map(c=>`<option value="${c[0]}">${c[0]}</option>`).join("");
+  }
+  refreshRoute();
+}
+function haversine(lat1,lon1,lat2,lon2){
+  const R=6371, p=Math.PI/180, dLat=(lat2-lat1)*p, dLon=(lon2-lon1)*p;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*p)*Math.cos(lat2*p)*Math.sin(dLon/2)**2;
+  return Math.round(2*R*Math.asin(Math.sqrt(a)));
+}
+function refreshRoute(){
+  const country=$("country").value, cityName=$("city").value;
+  const city=destinations[country].find(c=>c[0]===cityName)||destinations[country].find(c=>c[0]===$("cityReadonly").value.replace(/^.*\s/, ""))||destinations[country][0];
+  const distance=haversine(44.4268,26.1025,city[1],city[2]);
+  $("distance").textContent=distance.toLocaleString("ro-RO")+" km";
+  $("destName").textContent=city[0]; $("destFlag").textContent=flags[country]||"🌐";
+}
+$("country").addEventListener("change",refreshCountry);
+$("city").addEventListener("change",refreshRoute);
+
+airlines.forEach(a=>{
+  const opt=new Option(`✈ ${a[1]} — ${a[0]}`,a[0]); opt.dataset.code=a[1]; opt.dataset.color=a[2]; opt.dataset.domain=a[3]; $("airline").add(opt);
+  const logoUrl=`https://www.google.com/s2/favicons?domain=${a[3]}&sz=128`;
+  $("airlineMenu").insertAdjacentHTML("beforeend",`<button type="button" class="airline-option" data-name="${a[0]}"><img src="${logoUrl}" alt=""><span><strong>${a[0]}</strong><br><small>${a[1]}</small></span></button>`);
+});
+function refreshAirline(){
+  const selected=$("airline").selectedOptions[0];
+  const airline=airlines.find(a=>a[0]===$("airline").value);
+  const logoUrl=selected?.dataset.domain ? `https://www.google.com/s2/favicons?domain=${selected.dataset.domain}&sz=128` : "";
+  $("airlineButton").innerHTML=selected ? `<img src="${logoUrl}" alt=""> <span>${selected.textContent}</span>` : `<span>Selectează compania aeriană</span>`;
+  $("airlinePreview").innerHTML=selected ? `<span class="airline-logo" style="background:${selected.dataset.color||'#102a43'};overflow:hidden"><img src="${logoUrl}" alt="${selected.textContent}" style="width:38px;height:38px;object-fit:contain;background:#fff"></span> ${selected.textContent}` : "";
+}
+$("airline").addEventListener("change",refreshAirline);
+$("airlineButton").addEventListener("click",()=>$("airlineMenu").classList.toggle("open"));
+$("airlineMenu").addEventListener("click",e=>{
+  const option=e.target.closest(".airline-option");
+  if(!option)return;
+  $("airline").value=option.dataset.name;
+  $("airline").dispatchEvent(new Event("change"));
+  $("airlineMenu").classList.remove("open");
+});
+document.addEventListener("click",e=>{
+  if(!e.target.closest(".airline-picker"))$("airlineMenu").classList.remove("open");
+});
+
+function refreshPeople(){
+  const selectedMembers=[...document.querySelectorAll(".member")].filter(select=>select.value).length;
+  const count=1+selectedMembers;
+  $("delegateCount").value=count;
+  $("perDiemPeople").value=count;
+  $("summaryPeople").textContent=count;
+  calcDiem();
+  calcTransport();
+}
+$("members").addEventListener("click",e=>{
+  if(e.target.classList.contains("remove")){e.target.closest(".person-row").remove();refreshPeople();}
+});
+$("members").addEventListener("change",refreshPeople);
+$("addMember").addEventListener("click",()=>{
+  $("members").insertAdjacentHTML("beforeend",`<div class="person-row"><select class="member">${employeeOptions()}</select><button type="button" class="remove" title="Elimină">×</button></div>`); refreshPeople();
+});
+
+function transportTemplate(){
+  return `<div class="transport-row">
+    <div><label>Tip transport</label><select class="transportType"><option>🚌 Autobuz</option><option>🚗 Ride-sharing</option><option>🚆 Tren</option><option>🚇 Metro</option><option>⛴️ Ferry-boat</option><option>🚕 Taxi</option><option>🚘 Mașină personală</option><option>➕ Altul (completați)</option></select></div>
+    <div><label>Detalii / traseu</label><input class="transportDetail" placeholder="Ex. Aeroport - hotel"></div>
+    <div><label>Preț bilet / persoană - dus (RON)</label><input class="transportOut" type="number" min="0" value="0"></div>
+    <div><label>Preț bilet / persoană - întors (RON)</label><input class="transportBack" type="number" min="0" value="0"></div>
+    <button type="button" class="remove removeTransport" title="Elimină">×</button>
+  </div>`;
+}
+$("transportRows").insertAdjacentHTML("beforeend",transportTemplate());
+$("addTransport").addEventListener("click",()=>{$("transportRows").insertAdjacentHTML("beforeend",transportTemplate());});
+$("transportRows").addEventListener("click",e=>{if(e.target.classList.contains("removeTransport")){e.target.closest(".transport-row").remove();calcTransport();}});
+$("transportRows").addEventListener("input",calcTransport);
+function calcTransport(){
+  const selectedMembers=[...document.querySelectorAll(".member")].filter(select=>select.value).length;
+  const people=1+selectedMembers;
+  let total=0;
+  document.querySelectorAll(".transport-row").forEach(r=>{total+=((+r.querySelector(".transportOut").value||0)+(+r.querySelector(".transportBack").value||0))*people;});
+  $("summaryTransport").textContent=total.toLocaleString("ro-RO")+" RON";
+  return total;
+}
+
+function calcHotel(){
+  const total=(+$("roomCount").value||0)*(+$("roomNight").value||0)*(+$("roomNights").value||0);
+  $("hotelTotal").textContent=total.toLocaleString("ro-RO")+" RON";
+  $("summaryHotel").textContent=total.toLocaleString("ro-RO")+" RON";
+}
+$("roomCount").addEventListener("input",calcHotel);$("roomNight").addEventListener("input",calcHotel);$("roomNights").addEventListener("input",calcHotel);
+function calcDiem(){
+  const total=(+$("perDiem").value||0)*(+$("perDiemDays").value||0)*(+$("perDiemPeople").value||0);
+  $("perDiemTotal").textContent=total.toLocaleString("ro-RO")+" RON";
+  $("summaryDiem").textContent=total.toLocaleString("ro-RO")+" RON";
+}
+$("perDiem").addEventListener("input",calcDiem);$("perDiemDays").addEventListener("input",calcDiem);
+
+function openCalendar(inputId,calendarId){
+  const input=$(inputId), popup=$(calendarId);
+  let view=new Date();
+  const selected=parseDisplayedDate(input.value);
+  if(selected)view=selected;
+  function render(){
+    const year=view.getFullYear(), month=view.getMonth();
+    const monthName=view.toLocaleDateString("ro-RO",{month:"long",year:"numeric"});
+    const first=new Date(year,month,1), start=(first.getDay()+6)%7;
+    const days=new Date(year,month+1,0).getDate();
+    const months=["Ianuarie","Februarie","Martie","Aprilie","Mai","Iunie","Iulie","August","Septembrie","Octombrie","Noiembrie","Decembrie"];
+    const monthOptions=months.map((name,i)=>`<option value="${i}" ${i===month?"selected":""}>${name}</option>`).join("");
+    const yearOptions=[2026,2027,2028].map(y=>`<option value="${y}" ${y===year?"selected":""}>${y}</option>`).join("");
+    let html=`<div class="calendar-head"><button type="button" data-action="prev" ${year===2026&&month===0?"disabled":""}>‹</button><span><select class="calendar-month">${monthOptions}</select><select class="calendar-year">${yearOptions}</select></span><button type="button" data-action="next" ${year===2028&&month===11?"disabled":""}>›</button></div><div class="calendar-grid">`;
+    ["L","M","M","J","V","S","D"].forEach(d=>html+=`<button type="button" class="dow">${d}</button>`);
+    for(let i=0;i<start;i++)html+=`<button type="button" class="muted" disabled></button>`;
+    for(let d=1;d<=days;d++){
+      const iso=`${String(d).padStart(2,"0")}.${String(month+1).padStart(2,"0")}.${year}`;
+      const cls=input.value===iso?" selected":"";
+      html+=`<button type="button" class="day${cls}" data-date="${d}">${d}</button>`;
+    }
+    html+="</div>";
+    popup.innerHTML=html;
+  }
+  render();
+  popup.classList.add("open");
+  popup.onchange=e=>{
+    if(e.target.classList.contains("calendar-month")){
+      view.setMonth(Number(e.target.value));render();
+    }else if(e.target.classList.contains("calendar-year")){
+      view.setFullYear(Number(e.target.value));render();
+    }
+  };
+  popup.onclick=e=>{
+    const action=e.target.dataset.action;
+    if(action==="prev"){
+      const previous=new Date(view.getFullYear(),view.getMonth()-1,1);
+      if(previous>=new Date(2026,0,1)){view=previous;render();}
+    }
+    else if(action==="next"){
+      const next=new Date(view.getFullYear(),view.getMonth()+1,1);
+      if(next<=new Date(2028,11,1)){view=next;render();}
+    }
+    else if(e.target.classList.contains("day")){
+      const d=Number(e.target.dataset.date);
+      input.value=`${String(d).padStart(2,"0")}.${String(view.getMonth()+1).padStart(2,"0")}.${view.getFullYear()}`;
+      popup.classList.remove("open");
+      input.dispatchEvent(new Event("change"));
+    }
+  };
+}
+function parseDisplayedDate(value){
+  const parts=value.split(".");
+  return parts.length===3 ? new Date(+parts[2],+parts[1]-1,+parts[0]) : null;
+}
+$("departDate").addEventListener("click",()=>{document.querySelectorAll(".calendar-popup").forEach(p=>p.classList.remove("open"));openCalendar("departDate","departCalendar");});
+$("returnDate").addEventListener("click",()=>{document.querySelectorAll(".calendar-popup").forEach(p=>p.classList.remove("open"));openCalendar("returnDate","returnCalendar");});
+document.addEventListener("click",e=>{if(!e.target.closest(".date-picker"))document.querySelectorAll(".calendar-popup").forEach(p=>p.classList.remove("open"));});
+
+function syncDays(){
+  const a=$("departDate").value,b=$("returnDate").value;
+  if(a&&b){
+    const [da,ma,ya]=a.split(".").map(Number), [db,mb,yb]=b.split(".").map(Number);
+    if(ya&&yb){
+      const diff=Math.max(1,Math.round((new Date(yb,mb-1,db)-new Date(ya,ma-1,da))/86400000)+1);
+      $("days").value=diff;$("perDiemDays").value=diff;calcDiem();
+    }
+  }
+}
+$("departDate").addEventListener("change",syncDays);$("returnDate").addEventListener("change",syncDays);$("days").addEventListener("input",()=>{$("perDiemDays").value=$("days").value;calcDiem();});
+
+$("resetBtn").addEventListener("click",()=>{if(confirm("Resetați toate câmpurile fișei?")) location.reload();});
+refreshCountry();refreshPeople();calcHotel();calcDiem();refreshAirline();
+</script>
+</body>
+</html>
